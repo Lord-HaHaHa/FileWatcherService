@@ -75,7 +75,7 @@ namespace FileWatcherService
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
-            Run();
+            StartWatcher();
 
         }
 
@@ -87,15 +87,12 @@ namespace FileWatcherService
             serviceStatus.dwWaitHint = 100000;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
+            watcher.Dispose();
             eventLog1.WriteEntry("In OnStop.");
 
             // Update the service state to Stopped.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_STOPPED;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
-        }
-        protected override void OnContinue()
-        {
-            eventLog1.WriteEntry("In OnContinue.");
         }
         public void OnTimer(object sender, ElapsedEventArgs args)
         {
@@ -103,37 +100,38 @@ namespace FileWatcherService
             eventLog1.WriteEntry("Monitoring the System", EventLogEntryType.Information, eventId++);
         }
 
-        private void Run()
+        private void StartWatcher()
         {
             eventLog1.WriteEntry("Create Watcher");
             // Create a new FileSystemWatcher and set its properties.
-            using (FileSystemWatcher watcher = new FileSystemWatcher())
-            {
-                watcher.Path = "C:\\Users\\michel\\Desktop";
+            public FileSystemWatcher watcher = new FileSystemWatcher();
+            
+            
+            watcher.Path = "C:\\Users\\michel\\Desktop";
 
-                eventLog1.WriteEntry(watcher.Path);
+            eventLog1.WriteEntry(watcher.Path);
 
-                // Watch for changes in LastAccess and LastWrite times, and
-                // the renaming of files or directories.
-                watcher.NotifyFilter = NotifyFilters.LastAccess
-                                     | NotifyFilters.LastWrite
-                                     | NotifyFilters.FileName
-                                     | NotifyFilters.DirectoryName;
+            // Watch for changes in LastAccess and LastWrite times, and
+            // the renaming of files or directories.
+            watcher.NotifyFilter = NotifyFilters.LastAccess
+                                    | NotifyFilters.LastWrite
+                                    | NotifyFilters.FileName
+                                    | NotifyFilters.DirectoryName;
 
-                // Only watch text files.
-                watcher.Filter = "*.txt";
+            // Only watch text files.
+            watcher.Filter = "*.txt";
 
-                // Add event handlers.
-                watcher.Changed += OnChanged;
-                watcher.Created += OnChanged;
-                watcher.Deleted += OnChanged;
-                watcher.Renamed += OnRenamed;
+            // Add event handlers.
+            watcher.Changed += OnChanged;
+            watcher.Created += OnChanged;
+            watcher.Deleted += OnChanged;
+            watcher.Renamed += OnRenamed;
 
-                // Begin watching.
-                watcher.IncludeSubdirectories = true;
-                watcher.EnableRaisingEvents = true;
-                //while (true) ;
-            }
+            // Begin watching.
+            watcher.IncludeSubdirectories = true;
+            watcher.EnableRaisingEvents = true;
+            //while (true) ;
+            
         }
 
         // Define the event handlers.
